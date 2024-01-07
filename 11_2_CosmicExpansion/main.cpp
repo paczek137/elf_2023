@@ -115,11 +115,13 @@ struct Pixel
 
 struct Image
 {
+    static const inline size_t GRAVITAIONAL_EFFECT_VALUE = 1000000;
+    // static const inline size_t GRAVITAIONAL_EFFECT_VALUE = 100;
     std::vector<Pixel> pixels;
     size_t pixelsInRow;
     size_t pixelsInColumn;
-    // std::vector<std::pair<Pixel&, Pixel&>> pairsOfGalaxies;
-    std::vector<std::pair<Pixel, Pixel>> pairsOfGalaxies;
+    // std::vector<std::pair<Pixel, Pixel>> pairsOfGalaxies;
+    std::vector<std::pair<std::reference_wrapper<const Pixel>, std::reference_wrapper<const Pixel>>> pairsOfGalaxies;
 
     void parseInput(const vector<string> &lines)
     {
@@ -162,7 +164,7 @@ struct Image
                 [](const Pixel &pixel){return Pixel::PixelSymbol::EMPTY_SPACE == pixel.symbol;}))
             {
                 cout << "found gravitational effect at " << y << " row" << endl;
-                this->markGravitationalEffectInRow(y, 2);
+                this->markGravitationalEffectInRow(y, GRAVITAIONAL_EFFECT_VALUE);
             }
         }
 
@@ -180,7 +182,7 @@ struct Image
             if (pixelsInColumn == cnt)
             {
                 cout << "found gravitational effect at " << x << " column" << endl;
-                this->markGravitationalEffectInColumn(x, 2);
+                this->markGravitationalEffectInColumn(x, GRAVITAIONAL_EFFECT_VALUE);
             }
         }
     }
@@ -213,9 +215,9 @@ struct Image
         return pixels.at(y * pixelsInColumn + x);
     }
 
-    long getPathLengthOfPixels(const Pixel &p1, const Pixel &p2)
+    size_t getPathLengthOfPixels(const Pixel &p1, const Pixel &p2)
     {
-        long length{};
+        size_t length{};
         ssize_t xDiff = p2.x - p1.x;
         ssize_t yDiff = p2.y - p1.y;
 
@@ -242,20 +244,25 @@ struct Image
                 length += this->getPixel(p1.x, p1.y-i).sizeX();
             }
         }
+        // cout << "+ " << length << endl;
         // cout << "pair x1: " << p1.x << ", y1: " << p1.y << " x2: " << p2.x << ", y2: " << p2.y << 
         //         ", xDiff: " << xDiff << ", yDiff: " << yDiff << ", length: " << length << endl;
         return length;
     }
 
-    long getPathLengthOfPixels(const std::pair<Pixel, Pixel> &pair)
+    size_t getPathLengthOfPixels(const std::pair<Pixel, Pixel> &pair)
     {
         return getPathLengthOfPixels(std::get<0>(pair), std::get<1>(pair));
     }
 
     void countLengthOfPaths()
     {
-        long length = std::accumulate(pairsOfGalaxies.cbegin(), pairsOfGalaxies.cend(), 0, 
-                        [&](long length, const std::pair<Pixel, Pixel> &pair){return length + getPathLengthOfPixels(std::get<0>(pair), std::get<1>(pair));});
+        size_t length = std::accumulate(pairsOfGalaxies.cbegin(), pairsOfGalaxies.cend(), static_cast<size_t>(0), // WOW!!!
+                        [&](size_t length, const std::pair<Pixel, Pixel> &pair) -> size_t
+                        {
+                            // cout << "l: " << length << ", sizeof: " << sizeof(length) << ", is signed: " << std::is_signed<decltype(length)>::value << endl;
+                            return length + getPathLengthOfPixels(std::get<0>(pair), std::get<1>(pair));
+                        });
         cout << "total length: " << length << endl;
         Pixel p = pixels.at(5);
         // cout << "Xcale of x: " << p.x << ": " << p.sizeY() << endl;
@@ -304,7 +311,7 @@ int main()
     std::filesystem::path cwd = getExePath();
     cout << "Hello World: " << cwd.filename() << endl;
 
-    // string filename(cwd.parent_path()/"example_input"); // 374
+    // string filename(cwd.parent_path()/"example_input"); // 82000210
     string filename(cwd.parent_path()/"input");
     ifstream input_file(filename);
 
@@ -327,9 +334,19 @@ int main()
     image.parseInput(lines);
     cout << image << endl;
     image.checkGravitationalEffects();
-    cout << image << endl;
+    // cout << image << endl;
     image.findPairsOfGalaxies();
     image.countLengthOfPaths();
+
+    // cout << "sizeof(size_t): " << sizeof(size_t) << endl;
+    // cout << "sizeof(long): " << sizeof(long) << endl;
+
+    // size_t v{};
+    // v = 2136032315;
+    // cout << v << endl;
+    // v += 14000216;
+    // cout << v << endl;
+    // cout << "max of size_t: " << std::numeric_limits<size_t>::max() << endl;
 
     return EXIT_SUCCESS;
 }
